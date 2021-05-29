@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>hw6</title>
 </head>
-<body onload="enableSearch()">
+<body>
     <div class="header" align="center">
         Events Search
     </div>
@@ -44,6 +44,9 @@
             </table>
         </form>
     </div>
+    <div id="result"> 
+
+    </div>
 
 </body>
 </html>
@@ -58,14 +61,25 @@
         document.getElementById("firstForm").reset();
     }
 
-    function enableSearch(){
-        var x=document.getElementById("Search")
-        document.getElementById("Search").removeAttribute("disabled")
-    }
-
     function checkform(){
         alert("check");
         var x = document.getElementById("keyword").value;
         alert(x);
+    }
+    window.onload = function () {
+        alert("load")
+        var x=document.getElementById("Search")
+        document.getElementById("Search").removeAttribute("disabled")
+
+        var keyword = document.getElementById("keyword").value;
+        var url = "http://127.0.0.1:8080/search?"
+        url = url + "keyword=" + keyword;
+
+        var response = fetch(url);
+        response
+            .then(function(res) {
+                console.log("res: ", res)
+                document.getElementById("result").innerHTML = res;
+            })
     }
 </script>
