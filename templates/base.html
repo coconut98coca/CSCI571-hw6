@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>hw6</title>
+</head>
+<body onload="enableSearch()">
+    <div class="header" align="center">
+        Events Search
+    </div>
+
+    <div class="form">
+        <form id="firstForm" onsubmit="search(event)">
+            <table align="center" >
+                <tr>
+                    <td>
+                        Keyword &nbsp;
+                        <input type="text" id="keyword" name="keyword" autocomplete="on" required >
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Category &nbsp;
+                        <select>
+                            <option value="Default">Default</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Distance(miles) &nbsp;
+                        <input type="number" id="keyWord" name="keyWord" autocomplete="on" required > &nbsp;
+                        from &nbsp;
+                        <label><input type="radio" name="distance" value="Here">Here</label>
+                        <label><input type="radio" name="distance" value="Other"><input type="number" name="distance" placeholder="10"></label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="submit" id="Search" value="Search" disabled="disabled" /> &nbsp;&nbsp;
+                        <button onclick="clearform()">Clear</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+</body>
+</html>
+<script>
+    function search(event){
+        event.preventDefault();
+        var x = document.getElementById("keyword").value;
+        alert(x);
+        
+    }
+    function clearform(){
+        document.getElementById("firstForm").reset();
+    }
+
+    function enableSearch(){
+        var x=document.getElementById("Search")
+        document.getElementById("Search").removeAttribute("disabled")
+    }
+
+    function checkform(){
+        alert("check");
+        var x = document.getElementById("keyword").value;
+        alert(x);
+    }
+</script>
