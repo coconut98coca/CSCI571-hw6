@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script>
+</script>
+<title>hw6</title>
+</head>
+<body>
+    <div class="header" align="center">
+        Events Search
+    </div>
+
+    <div class="form">
+        <form id="firstForm" onsubmit="search(event)">
+            <table align="center" >
+                <tr>
+                    <td>
+                        Keyword &nbsp;
+                        <input type="text" id="keyword" name="keyword" autocomplete="on" required >
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Category &nbsp;
+                        <select id="category" name="category" >
+                            <option value="Default">Default</option>
+                            <option value="Music">Music</option>
+                            <option value="Sports">Sports</option>
+                            <option value="ArtsTheatre">Arts & Theatre</option>
+                            <option value="Film">Film</option>
+                            <option value="Miscellaneous">Miscellaneous</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        Distance(miles) &nbsp;
+                        <input type="number" id="distance" name="distance" placeholder="10" autocomplete="on" > &nbsp;
+                        from &nbsp;
+                        <label><input type="radio" name="distance" value="Here">Here</label>
+                        <label><input type="radio" name="distance" value="Other"><input type="number" name="distance" placeholder="location" ></label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <input type="submit" id="Search" value="Search" disabled="disabled" /> &nbsp;&nbsp;
+                        <button onclick="clearform()">Clear</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+    <div id="result"> 
+        <table align="center">
+            <thead>
+             <tr>
+              <td>Date</td>
+              <td>Icon</td>
+              <td>Event</td>
+              <td>Genre</td>
+              <td>Venue</td>
+             </tr>
+            </thead>
+            <tbody id="searchResult">
+                
+            </tbody>
+        </table> 
+    </div>
+
+</body>
+</html>
+<script>
+    var latitude;
+    var longitude;
+    function search(event){
+        event.preventDefault();
+        var keyword = document.getElementById("keyword").value;
+        var category = document.getElementById("category").value;
+        var distance = document.getElementById("distance").value;
+
+        // search
+        // var backend_url = "http://127.0.0.1:8080/search?"
+        var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
+        backend_url += "keyword=" + keyword
+        backend_url += "&category=" + category
+        backend_url += "&distance=" + distance
+        backend_url += "&latitude=" + latitude
+        backend_url += "&longitude=" + longitude
+
+        var response = fetch(backend_url)
+        response.then(res => res.json())
+                .then(function(events_data){
+                    console.log(events_data)
+                    
+                    var searchResultTable = document.getElementById('searchResult')
+                    var events_list = events_data["_embedded"]["events"]
+                    for(var i = 0; i < events_list.length; ++i){
+                        var newTableRow = document.createElement('tr');
+                        var image_url = events_list[i].images[0].url
+                        newTableRow.innerHTML = '<td>' + events_list[i].dates.start.localDate + ' ' + events_list[i].dates.start.localTime + '</td><td>'
+                                                + '<img src=' + image_url +' style="width: 40px; height:40px"></img>' +'</td><td>'
+                                                + events_list[i].name +'</td><td>'
+                                                + events_list[i].classifications[0].segment.name +'</td><td>'
+                                                + events_list[i]._embedded.venues[0].name +'</td>';
+                        searchResultTable.appendChild(newTableRow);
+                    }
+                })
+        
+    }
+    function clearform(){
+        document.getElementById("firstForm").reset();
+    }
+
+    function checkform(){
+        alert("check");
+        var x = document.getElementById("keyword").value;
+        alert(x);
+    }
+
+    window.onload = function () {
+        // get geo location
+        geo_url = "https://ipinfo.io/?token=c4eba8a0a82929"
+        var responsePromise = fetch(geo_url);
+        responsePromise
+            .then(function(response) {
+                    return response.json();
+                })
+            .then(function(geoData){
+                console.log(geoData)
+                var location = geoData["loc"]
+                var location_lat = location.substring(0, location.indexOf(','))
+                console.log(location_lat)
+                var location_log = location.substring(location.indexOf(',') + 1, location.length)
+                console.log(location_log)
+                latitude = location_lat
+                longitude = location_log
+                console.log(latitude, longitude)
+                
+                // enable search
+                var x=document.getElementById("Search")
+                document.getElementById("Search").removeAttribute("disabled")
+
+            })
+        
+
+    }
+</script>
