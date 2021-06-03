@@ -38,8 +38,8 @@
                         Distance(miles) &nbsp;
                         <input type="number" id="distance" name="distance" placeholder="10" autocomplete="on" > &nbsp;
                         from &nbsp;
-                        <label><input type="radio" name="distance" value="Here">Here</label>
-                        <label><input type="radio" name="distance" value="Other"><input type="number" name="distance" placeholder="location" ></label>
+                        <label><input type="radio" name="location" value="Here" checked>Here</label>
+                        <label><input type="radio" id="location" name="location" value="Other"><input name="location" id="locationInput" placeholder="location" ></label>
                     </td>
                 </tr>
                 <tr>
@@ -51,16 +51,13 @@
             </table>
         </form>
     </div>
-    <div id="result"> 
-        <table align="center">
-            <thead>
-             <tr>
-              <td>Date</td>
-              <td>Icon</td>
-              <td>Event</td>
-              <td>Genre</td>
-              <td>Venue</td>
-             </tr>
+    <div id="result">
+        <div id="noRecordsDisplay">
+
+        </div>
+        <table align="center" border="1" cellspacing="0">
+            <thead id="searchResultHead">
+             
             </thead>
             <tbody id="searchResult">
                 
@@ -79,37 +76,95 @@
         var category = document.getElementById("category").value;
         var distance = document.getElementById("distance").value;
 
-        // search
-        // var backend_url = "http://127.0.0.1:8080/search?"
-        var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
+        if(document.getElementById("location").checked){
+            // call google map api to get latitude and longitude
+            var googleGeoApi_base_url = "https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyDRm6eke0AgBCdf-4QGRrYOhktzb4y8Jos&address="
+            var location = document.getElementById("locationInput").value;
+            console.log(location)
+            googleGeoApi_base_url += location
+            console.log(googleGeoApi_base_url)
+            var response = fetch(googleGeoApi_base_url)
+            response.then(res => res.json())
+                    .then(function(geo_data){
+                        console.log("res:", geo_data)
+                        var lat = geo_data["results"][0]["geometry"]["location"]["lat"]
+                        var lng = geo_data["results"][0]["geometry"]["location"]["lng"]
+                        latitude = lat;
+                        longitude = lng;
+                        console.log("geo:", latitude, longitude)
+                        requestBackend()
+                    })
+        }
+        else{
+            requestBackend()
+        }
+        
+    }
+    function requestBackend(){
+        var backend_url = "http://127.0.0.1:8080/search?"
+        // var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
+
+        var keyword = document.getElementById("keyword").value;
+        var category = document.getElementById("category").value;
+        var distance = document.getElementById("distance").value;
+        if(distance == ''){
+            distance = 10
+        }
+
         backend_url += "keyword=" + keyword
         backend_url += "&category=" + category
         backend_url += "&distance=" + distance
         backend_url += "&latitude=" + latitude
         backend_url += "&longitude=" + longitude
 
+        // get data from backend
         var response = fetch(backend_url)
         response.then(res => res.json())
                 .then(function(events_data){
                     console.log(events_data)
                     
-                    var searchResultTable = document.getElementById('searchResult')
-                    var events_list = events_data["_embedded"]["events"]
-                    for(var i = 0; i < events_list.length; ++i){
-                        var newTableRow = document.createElement('tr');
-                        var image_url = events_list[i].images[0].url
-                        newTableRow.innerHTML = '<td>' + events_list[i].dates.start.localDate + ' ' + events_list[i].dates.start.localTime + '</td><td>'
-                                                + '<img src=' + image_url +' style="width: 40px; height:40px"></img>' +'</td><td>'
-                                                + events_list[i].name +'</td><td>'
-                                                + events_list[i].classifications[0].segment.name +'</td><td>'
-                                                + events_list[i]._embedded.venues[0].name +'</td>';
-                        searchResultTable.appendChild(newTableRow);
+                    if(events_data.page.totalElements == 0){
+                        var resultDiv = document.getElementById('noRecordsDisplay')
+                        resultDiv.innerHTML = '<div id="noRecords" align="center" class="border" style="background-color: rgb(228, 225, 225); margin-left:20%; margin-right: 20%; ">No Records has been found</div>'
+                    }
+                    else{
+                        clearResultArea();
+                        // render head of result table
+                        var searchResultTableHead = document.getElementById('searchResultHead')
+                        var tableHead = document.createElement('tr');
+                        tableHead.innerHTML = '<th>Date</th><th>Icon</th><th>Event</th><th>Genre</th><th>Venue</th>'
+                        searchResultTableHead.appendChild(tableHead)
+
+                        // render body of result table
+                        var searchResultTable = document.getElementById('searchResult')
+                        var events_list = events_data["_embedded"]["events"]
+                        for(var i = 0; i < events_list.length; ++i){
+                            var newTableRow = document.createElement('tr');
+                            var image_url = events_list[i].images[0].url
+                            newTableRow.innerHTML = '<td>' + events_list[i].dates.start.localDate + ' ' + events_list[i].dates.start.localTime + '</td><td>'
+                                                    + '<img src=' + image_url +' style="width: 40px; height:40px"></img>' +'</td><td>'
+                                                    + events_list[i].name +'</td><td>'
+                                                    + events_list[i].classifications[0].segment.name +'</td><td>'
+                                                    + events_list[i]._embedded.venues[0].name +'</td>';
+                            searchResultTable.appendChild(newTableRow);
+                        }
                     }
                 })
         
     }
     function clearform(){
+        // clear form
         document.getElementById("firstForm").reset();
+        clearResultArea();
+    }
+    function clearResultArea(){
+        // clear result area
+        var noRecordsDisplay = document.getElementById("noRecordsDisplay");
+        noRecordsDisplay.innerHTML = ''
+        var searchResultHead = document.getElementById("searchResultHead");
+        searchResultHead.innerHTML = ''
+        var searchResult = document.getElementById("searchResult");
+        searchResult.innerHTML = ''
     }
 
     function checkform(){
@@ -130,9 +185,7 @@
                 console.log(geoData)
                 var location = geoData["loc"]
                 var location_lat = location.substring(0, location.indexOf(','))
-                console.log(location_lat)
                 var location_log = location.substring(location.indexOf(',') + 1, location.length)
-                console.log(location_log)
                 latitude = location_lat
                 longitude = location_log
                 console.log(latitude, longitude)
@@ -142,7 +195,12 @@
                 document.getElementById("Search").removeAttribute("disabled")
 
             })
-        
-
     }
 </script>
+<style>
+    .border{
+        border: 3px; 
+        border-style: solid; 
+        border-color: rgb(190, 189, 189);
+    }
+</style>

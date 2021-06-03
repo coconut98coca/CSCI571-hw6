@@ -35,7 +35,12 @@ def do_search():
     ticketmaster_base_url = "https://app.ticketmaster.com/discovery/v2/events.json?apikey=Qf8PRg3ggae12R8TRPqlTRnJdD6EE3q3"
     arg = request.args
     search_data = arg.to_dict()
-    # print("++++++++", search_data)
+    print("++++++++", search_data)
+
+    # # convert location into latitude and longitude
+    # location = search_data.get("location")
+    # if location != "":
+    #     pass
 
     # geo point
     latitude = search_data["latitude"]
