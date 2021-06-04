@@ -7,51 +7,54 @@
 <title>hw6</title>
 </head>
 <body>
-    <div class="header" align="center">
-        Events Search
+    <div class="searchBlock border">
+        <div class="header" align="center">
+            Events Search
+        </div>
+        <hr style="margin-left: 20px; margin-right: 20px; color: rgb(190, 189, 189);">
+        <div class="form">
+            <form id="firstForm" onsubmit="search(event)">
+                <table style="position: relative; left: 60px;">
+                    <tr>
+                        <td>
+                            Keyword &nbsp;
+                            <input type="text" id="keyword" name="keyword" autocomplete="on" required >
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Category &nbsp;
+                            <select id="category" name="category" >
+                                <option value="Default">Default</option>
+                                <option value="Music">Music</option>
+                                <option value="Sports">Sports</option>
+                                <option value="ArtsTheatre">Arts & Theatre</option>
+                                <option value="Film">Film</option>
+                                <option value="Miscellaneous">Miscellaneous</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Distance(miles) &nbsp;
+                            <input type="number" id="distance" name="distance" placeholder="10" autocomplete="on" style="font-weight: 600;" > &nbsp;
+                            from &nbsp;
+                            <label  style="font-weight: 100;"><input type="radio" name="location" value="Here" onclick="disableLocationInput()" checked>Here</label><br> 
+                            <label style="position:relative; left: 385px;"><input type="radio" id="locationOther" name="location" value="Other" onclick="enableLocationInput()"><input name="location" id="locationInput" placeholder="location" disabled="disabled" ></label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="submit" id="Search" value="Search" disabled="disabled" /> &nbsp;&nbsp;
+                            <button onclick="clearform()">Clear</button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+            <br>
+        </div>
     </div>
-
-    <div class="form">
-        <form id="firstForm" onsubmit="search(event)">
-            <table align="center" >
-                <tr>
-                    <td>
-                        Keyword &nbsp;
-                        <input type="text" id="keyword" name="keyword" autocomplete="on" required >
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Category &nbsp;
-                        <select id="category" name="category" >
-                            <option value="Default">Default</option>
-                            <option value="Music">Music</option>
-                            <option value="Sports">Sports</option>
-                            <option value="ArtsTheatre">Arts & Theatre</option>
-                            <option value="Film">Film</option>
-                            <option value="Miscellaneous">Miscellaneous</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Distance(miles) &nbsp;
-                        <input type="number" id="distance" name="distance" placeholder="10" autocomplete="on" > &nbsp;
-                        from &nbsp;
-                        <label><input type="radio" name="location" value="Here" checked>Here</label>
-                        <label><input type="radio" id="location" name="location" value="Other"><input name="location" id="locationInput" placeholder="location" ></label>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="submit" id="Search" value="Search" disabled="disabled" /> &nbsp;&nbsp;
-                        <button onclick="clearform()">Clear</button>
-                    </td>
-                </tr>
-            </table>
-        </form>
-    </div>
-    <div id="result">
+    <div id="result" style="margin-top: 50px;">
         <div id="noRecordsDisplay">
 
         </div>
@@ -64,19 +67,27 @@
             </tbody>
         </table> 
     </div>
+    <div id="detail" style="position:relative; margin-top: 50px;">
+
+    </div>
 
 </body>
 </html>
 <script>
     var latitude;
     var longitude;
+    var current_latitude;
+    var current_longitude;
+    var events_list_global;
     function search(event){
         event.preventDefault();
+        clearResultArea();
         var keyword = document.getElementById("keyword").value;
         var category = document.getElementById("category").value;
         var distance = document.getElementById("distance").value;
 
-        if(document.getElementById("location").checked){
+        if(document.getElementById("locationOther").checked){
+            console.log("checkeddddd")
             // call google map api to get latitude and longitude
             var googleGeoApi_base_url = "https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyDRm6eke0AgBCdf-4QGRrYOhktzb4y8Jos&address="
             var location = document.getElementById("locationInput").value;
@@ -91,6 +102,8 @@
                         var lng = geo_data["results"][0]["geometry"]["location"]["lng"]
                         latitude = lat;
                         longitude = lng;
+                        current_latitude = lat;
+                        current_longitude = lng;
                         console.log("geo:", latitude, longitude)
                         requestBackend()
                     })
@@ -101,8 +114,8 @@
         
     }
     function requestBackend(){
-        var backend_url = "http://127.0.0.1:8080/search?"
-        // var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
+        // var backend_url = "http://127.0.0.1:8080/search?"
+        var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
 
         var keyword = document.getElementById("keyword").value;
         var category = document.getElementById("category").value;
@@ -116,17 +129,19 @@
         backend_url += "&distance=" + distance
         backend_url += "&latitude=" + latitude
         backend_url += "&longitude=" + longitude
-
+        console.log("final location: ", latitude, longitude)
         // get data from backend
         var response = fetch(backend_url)
         response.then(res => res.json())
                 .then(function(events_data){
                     console.log(events_data)
                     
+                    // no records from ticketmaster
                     if(events_data.page.totalElements == 0){
                         var resultDiv = document.getElementById('noRecordsDisplay')
                         resultDiv.innerHTML = '<div id="noRecords" align="center" class="border" style="background-color: rgb(228, 225, 225); margin-left:20%; margin-right: 20%; ">No Records has been found</div>'
                     }
+                    // find results from ticketmaster
                     else{
                         clearResultArea();
                         // render head of result table
@@ -138,20 +153,102 @@
                         // render body of result table
                         var searchResultTable = document.getElementById('searchResult')
                         var events_list = events_data["_embedded"]["events"]
+                        events_list_global = events_list
                         for(var i = 0; i < events_list.length; ++i){
                             var newTableRow = document.createElement('tr');
                             var image_url = events_list[i].images[0].url
+                            var genre = 'N/A'
+                            if(events_list[i].hasOwnProperty("classifications")){
+                                if(events_list[i].classifications[0].hasOwnProperty("segment")){
+                                    genre = events_list[i].classifications[0].segment.name
+                                }
+                            }
                             newTableRow.innerHTML = '<td>' + events_list[i].dates.start.localDate + ' ' + events_list[i].dates.start.localTime + '</td><td>'
                                                     + '<img src=' + image_url +' style="width: 40px; height:40px"></img>' +'</td><td>'
-                                                    + events_list[i].name +'</td><td>'
-                                                    + events_list[i].classifications[0].segment.name +'</td><td>'
+                                                    + '<a href="#detail" onClick="displayDetail(' + i +')" style="text-decoration: none; font-color: black">' + events_list[i].name + '</a>' +'</td><td>'
+                                                    + genre +'</td><td>'
                                                     + events_list[i]._embedded.venues[0].name +'</td>';
                             searchResultTable.appendChild(newTableRow);
                         }
                     }
                 })
-        
     }
+
+    function displayDetail(eventIndex){
+        var detail = document.getElementById("detail")
+        var event_content = events_list_global[eventIndex]
+        console.log("content: ", event_content)
+        var name = event_content.name
+        var Date = event_content.dates.start.localDate + ' ' + event_content.dates.start.localTime
+        var ArtistTeamList = ''
+        if(event_content.hasOwnProperty("_embedded") && event_content._embedded.hasOwnProperty("attractions")){
+            for(var i = 0; i < event_content._embedded.attractions.length; ++i){
+                if(event_content._embedded.attractions[i].hasOwnProperty('url')){
+                    ArtistTeamList += '<a href="' + event_content._embedded.attractions[i].url + '" target="_blank" style="text-decoration:none;">' + event_content._embedded.attractions[i].name + '</a>'
+                }
+                else{
+                    ArtistTeamList += event_content._embedded.attractions[i].name
+                }
+                if(i != event_content._embedded.attractions.length-1){
+                    ArtistTeamList += " | "
+                }
+                if(i > 1 && i % 2 == 0){
+                    ArtistTeamList += " <br> "
+                }
+            }
+        }
+        var Venue = event_content._embedded.venues[0].name
+        var GenresList = ''
+        if(event_content.hasOwnProperty("classifications")){
+            if(event_content.classifications[0].hasOwnProperty("subGenre") && event_content.classifications[0].subGenre.name != 'Undefined'){
+                GenresList += event_content.classifications[0].subGenre.name 
+            }
+            if(event_content.classifications[0].hasOwnProperty("genre") && event_content.classifications[0].genre.name != 'Undefined'){
+                GenresList += ' | ' + event_content.classifications[0].genre.name
+            }
+            if(event_content.classifications[0].hasOwnProperty("segment") && event_content.classifications[0].segment.name != 'Undefined'){
+                GenresList += ' | ' + event_content.classifications[0].segment.name
+            }
+            if(event_content.classifications[0].hasOwnProperty("subType") && event_content.classifications[0].subType.name != 'Undefined'){
+                GenresList += ' | ' + event_content.classifications[0].subType.name
+            }
+            if(event_content.classifications[0].hasOwnProperty("type") && event_content.classifications[0].type.name != 'Undefined'){
+                GenresList += ' | ' + event_content.classifications[0].type.name
+            }
+        }
+        var priceRanges = ''
+        if(event_content.hasOwnProperty("priceRanges")){
+            PriceRange = event_content.priceRanges[0].min + '-' + event_content.priceRanges[0].max + " " + event_content.priceRanges[0].currency;
+        }
+        var TicketStatus = event_content.dates.status.code
+        var BuyTicketAt = event_content.url
+        var SeatMap = ''
+        if(event_content.hasOwnProperty("seatmap")){
+            SeatMap = event_content.seatmap.staticUrl
+        }
+        var detailBlock = document.getElementById("detail")
+        var tempInnerHtml = ''
+        tempInnerHtml = '<h2 align="center">' + name + '</h2><h2>Date</h2><p>' + Date + '</p>'
+        if(ArtistTeamList != ''){
+            tempInnerHtml += '<h2>Artist/Team</h2><p>' + ArtistTeamList + '</p>'
+        }
+        tempInnerHtml += '<h2>Venue</h2><p>' + Venue + '</p>'
+        if(GenresList != ''){
+            tempInnerHtml += '<h2>Genres</h2><p>' + GenresList + '</p>'
+        }
+        
+        if(priceRanges != ''){
+            tempInnerHtml += '<h2>Price Ranges</h2><p>' + PriceRange + '</p>'
+        }
+        tempInnerHtml += '<h2>Ticket Status</h2><p>' + TicketStatus + '</p>'
+        tempInnerHtml += '<h2>Buy Ticket At</h2><p><a href="' + BuyTicketAt + '" target="_blank" style="text-decoration:none;">ticketmaster</a></p>'
+        if(SeatMap != ''){
+            tempInnerHtml += '<div class="SeatMap" style=""><img width=600px src=' + SeatMap +'></img></div>'
+        }
+       
+        detailBlock.innerHTML = tempInnerHtml
+    }
+
     function clearform(){
         // clear form
         document.getElementById("firstForm").reset();
@@ -165,6 +262,8 @@
         searchResultHead.innerHTML = ''
         var searchResult = document.getElementById("searchResult");
         searchResult.innerHTML = ''
+        var detailResult = document.getElementById("detail");
+        detailResult.innerHTML = ''
     }
 
     function checkform(){
@@ -172,7 +271,15 @@
         var x = document.getElementById("keyword").value;
         alert(x);
     }
-
+    function enableLocationInput(){
+        var x = document.getElementById("locationInput")
+        document.getElementById("locationInput").removeAttribute("disabled")
+        document.getElementById("locationInput").setAttribute("required", true)
+    }
+    function disableLocationInput(){
+        var x = document.getElementById("locationInput")
+        document.getElementById("locationInput").setAttribute("disabled", true)
+    }
     window.onload = function () {
         // get geo location
         geo_url = "https://ipinfo.io/?token=c4eba8a0a82929"
@@ -191,16 +298,43 @@
                 console.log(latitude, longitude)
                 
                 // enable search
-                var x=document.getElementById("Search")
+                var x = document.getElementById("Search")
                 document.getElementById("Search").removeAttribute("disabled")
 
             })
     }
 </script>
 <style>
+    .searchBlock{
+        position: relative;
+        width: 700px;
+        left: 50%;
+        margin-left: -350px;
+        background-color: rgb(241, 239, 239);
+    }
+    .header{
+        font-size: 50px;
+        font-style:italic;
+        font-family: 'Times New Roman', Times, serif;
+    }
+    .form{
+        font-size: 20px;
+        font-weight: 600;
+        font-family: 'Times New Roman', Times, serif;
+    }
     .border{
         border: 3px; 
         border-style: solid; 
         border-color: rgb(190, 189, 189);
     }
-</style>
+    .SeatMap{
+        position:absolute; 
+        top: 50px;
+        left: 400px;
+    }
+
+    a:link{color:black}
+    a:visited{color:black}
+    a:active{color:grey}
+    a:hover{cursor: pointer;}
+  </style> 
