@@ -58,7 +58,7 @@
         <div id="noRecordsDisplay">
 
         </div>
-        <table align="center" border="1" cellspacing="0">
+        <table align="center" border="1" cellspacing="0" width="1200px" style="margin-top: 50px;">
             <thead id="searchResultHead">
              
             </thead>
@@ -67,7 +67,7 @@
             </tbody>
         </table> 
     </div>
-    <div id="detail" style="position:relative; margin-top: 50px;">
+    <div id="detail"style="position:relative; margin-top: 50px;" >
 
     </div>
 
@@ -76,8 +76,6 @@
 <script>
     var latitude;
     var longitude;
-    var current_latitude;
-    var current_longitude;
     var events_list_global;
     function search(event){
         event.preventDefault();
@@ -100,20 +98,17 @@
                         console.log("res:", geo_data)
                         var lat = geo_data["results"][0]["geometry"]["location"]["lat"]
                         var lng = geo_data["results"][0]["geometry"]["location"]["lng"]
-                        latitude = lat;
-                        longitude = lng;
-                        current_latitude = lat;
-                        current_longitude = lng;
                         console.log("geo:", latitude, longitude)
-                        requestBackend()
+                        requestBackend(lat, lng)
                     })
         }
         else{
-            requestBackend()
+            requestBackend(latitude, longitude)
         }
         
     }
-    function requestBackend(){
+
+    function requestBackend(lat_used, long_used){
         // var backend_url = "http://127.0.0.1:8080/search?"
         var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
 
@@ -127,9 +122,11 @@
         backend_url += "keyword=" + keyword
         backend_url += "&category=" + category
         backend_url += "&distance=" + distance
-        backend_url += "&latitude=" + latitude
-        backend_url += "&longitude=" + longitude
-        console.log("final location: ", latitude, longitude)
+        backend_url += "&latitude=" + lat_used
+        backend_url += "&longitude=" + long_used
+
+        console.log("final location: ", lat_used, long_used)
+
         // get data from backend
         var response = fetch(backend_url)
         response.then(res => res.json())
@@ -175,7 +172,6 @@
     }
 
     function displayDetail(eventIndex){
-        var detail = document.getElementById("detail")
         var event_content = events_list_global[eventIndex]
         console.log("content: ", event_content)
         var name = event_content.name
@@ -218,7 +214,7 @@
         }
         var priceRanges = ''
         if(event_content.hasOwnProperty("priceRanges")){
-            PriceRange = event_content.priceRanges[0].min + '-' + event_content.priceRanges[0].max + " " + event_content.priceRanges[0].currency;
+            priceRanges = event_content.priceRanges[0].min + '-' + event_content.priceRanges[0].max + " " + event_content.priceRanges[0].currency;
         }
         var TicketStatus = event_content.dates.status.code
         var BuyTicketAt = event_content.url
@@ -226,9 +222,11 @@
         if(event_content.hasOwnProperty("seatmap")){
             SeatMap = event_content.seatmap.staticUrl
         }
-        var detailBlock = document.getElementById("detail")
+        
+        var headInnerHtml = ''
         var tempInnerHtml = ''
-        tempInnerHtml = '<h2 align="center">' + name + '</h2><h2>Date</h2><p>' + Date + '</p>'
+        headInnerHtml = '<h2 align="center">' + name + '</h2>'
+        tempInnerHtml = '<h2>Date</h2><p>' + Date + '</p>'
         if(ArtistTeamList != ''){
             tempInnerHtml += '<h2>Artist/Team</h2><p>' + ArtistTeamList + '</p>'
         }
@@ -238,15 +236,20 @@
         }
         
         if(priceRanges != ''){
-            tempInnerHtml += '<h2>Price Ranges</h2><p>' + PriceRange + '</p>'
+            tempInnerHtml += '<h2>Price Ranges</h2><p>' + priceRanges + '</p>'
         }
         tempInnerHtml += '<h2>Ticket Status</h2><p>' + TicketStatus + '</p>'
         tempInnerHtml += '<h2>Buy Ticket At</h2><p><a href="' + BuyTicketAt + '" target="_blank" style="text-decoration:none;">ticketmaster</a></p>'
         if(SeatMap != ''){
             tempInnerHtml += '<div class="SeatMap" style=""><img width=600px src=' + SeatMap +'></img></div>'
         }
-       
-        detailBlock.innerHTML = tempInnerHtml
+        var detailBlock = document.getElementById("detail")
+        if(SeatMap == ''){
+            detailBlock.innerHTML = headInnerHtml + '<div style="margin-left: 40%">' + tempInnerHtml + '</div>'
+        }
+        else{
+            detailBlock.innerHTML = headInnerHtml + '<div style="margin-left: 20%">' + tempInnerHtml + '</div>'
+        }
     }
 
     function clearform(){
@@ -264,22 +267,24 @@
         searchResult.innerHTML = ''
         var detailResult = document.getElementById("detail");
         detailResult.innerHTML = ''
+        disableLocationInput()
     }
 
     function checkform(){
-        alert("check");
-        var x = document.getElementById("keyword").value;
-        alert(x);
+        
     }
+
     function enableLocationInput(){
         var x = document.getElementById("locationInput")
         document.getElementById("locationInput").removeAttribute("disabled")
         document.getElementById("locationInput").setAttribute("required", true)
     }
+
     function disableLocationInput(){
         var x = document.getElementById("locationInput")
         document.getElementById("locationInput").setAttribute("disabled", true)
     }
+
     window.onload = function () {
         // get geo location
         geo_url = "https://ipinfo.io/?token=c4eba8a0a82929"
@@ -330,7 +335,7 @@
     .SeatMap{
         position:absolute; 
         top: 50px;
-        left: 400px;
+        left: 600px;
     }
 
     a:link{color:black}
