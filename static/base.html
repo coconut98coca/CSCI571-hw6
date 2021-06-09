@@ -58,7 +58,7 @@
         <div id="noRecordsDisplay">
 
         </div>
-        <table align="center" border="1" cellspacing="0" width="1200px" style="margin-top: 50px;">
+        <table align="center" border="1" cellspacing="0" style="margin-top: 50px; min-width: 1000px;">
             <thead id="searchResultHead">
              
             </thead>
@@ -109,8 +109,8 @@
     }
 
     function requestBackend(lat_used, long_used){
-        // var backend_url = "http://127.0.0.1:8080/search?"
-        var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
+        var backend_url = "http://127.0.0.1:8080/search?"
+        // var backend_url = "https://myfirstpython-9901.wl.r.appspot.com/search?"
 
         var keyword = document.getElementById("keyword").value;
         var category = document.getElementById("category").value;
@@ -153,18 +153,48 @@
                         events_list_global = events_list
                         for(var i = 0; i < events_list.length; ++i){
                             var newTableRow = document.createElement('tr');
-                            var image_url = events_list[i].images[0].url
+
+                            var image_url = ''
+                            if(events_list[i].hasOwnProperty("images") && events_list[i].images.length > 0){
+                                if(events_list[i].images[0].hasOwnProperty("url")){
+                                    image_url = events_list[i].images[0].url
+                                }
+                            }
+
                             var genre = 'N/A'
                             if(events_list[i].hasOwnProperty("classifications")){
                                 if(events_list[i].classifications[0].hasOwnProperty("segment")){
                                     genre = events_list[i].classifications[0].segment.name
                                 }
                             }
-                            newTableRow.innerHTML = '<td>' + events_list[i].dates.start.localDate + ' ' + events_list[i].dates.start.localTime + '</td><td>'
+
+                            var localDate = ''
+                            var localTime = ''
+                            if(events_list[i].hasOwnProperty("dates") && events_list[i].dates.hasOwnProperty("start")){
+                                if(events_list[i].dates.start.hasOwnProperty("localDate")){
+                                    localDate = events_list[i].dates.start.localDate
+                                }
+                                if(events_list[i].dates.start.hasOwnProperty("localTime")){
+                                    localTime = events_list[i].dates.start.localTime
+                                }
+                            }
+
+                            var eventName = ''
+                            if(events_list[i].hasOwnProperty("name")){
+                                eventName = events_list[i].name
+                            }
+
+                            var venuesName = ''
+                            if(events_list[i].hasOwnProperty("_embedded") && events_list[i]._embedded.hasOwnProperty("venues") && events_list[i]._embedded.venues.length > 0){
+                                if(events_list[i]._embedded.venues[0].hasOwnProperty("name")){
+                                    venuesName = events_list[i]._embedded.venues[0].name
+                                }
+                            }
+                            newTableRow.innerHTML = '<td>' + localDate + ' ' + localTime + '</td><td>'
                                                     + '<img src=' + image_url +' style="width: 40px; height:40px"></img>' +'</td><td>'
-                                                    + '<a href="#detail" onClick="displayDetail(' + i +')" style="text-decoration: none; font-color: black">' + events_list[i].name + '</a>' +'</td><td>'
+                                                    + '<a href="#detail" onClick="displayDetail(' + i +')" style="text-decoration: none; font-color: black">' + eventName + '</a>' +'</td><td>'
                                                     + genre +'</td><td>'
-                                                    + events_list[i]._embedded.venues[0].name +'</td>';
+                                                    + venuesName +'</td>';
                             searchResultTable.appendChild(newTableRow);
                         }
                     }
@@ -267,7 +297,9 @@
         searchResult.innerHTML = ''
         var detailResult = document.getElementById("detail");
         detailResult.innerHTML = ''
-        disableLocationInput()
+        if(!document.getElementById("locationOther").checked){
+            disableLocationInput()
+        }
     }
 
     function checkform(){
