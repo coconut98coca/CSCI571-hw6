@@ -1,4 +1,8 @@
-# hw6
+# CSCI 571 Courseworks (Summer 2021) hw6
+
+An event search website adopted in Flask <br>
+
+Link: https://myfirstpython-9901.wl.r.appspot.com/
 
 ## Ativate virtual environment on Windows: 
 ```Shell
